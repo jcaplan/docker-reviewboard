@@ -20,3 +20,9 @@ services:
             - WAIT_FOR_POSTGRES=true
         ports:
             - 8000:8000
+    svnserver:
+        image: elleflorio/svn-server
+        ports:
+            - '8080:80'
+            - '3960:3960'
+            - '4443:443'
