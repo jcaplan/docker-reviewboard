@@ -26,3 +26,10 @@ services:
             - '8080:80'
             - '3960:3960'
             - '4443:443'
+    webhook:
+        build:
+            ./webhook
+        ports:
+            - '8081:8081'
+        volumes:
+            - './webhook:/webhook'
