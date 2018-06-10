@@ -21,7 +21,9 @@ services:
         ports:
             - 8000:8000
     svnserver:
-        image: elleflorio/svn-server
+        build: ./svnserver
+        volumes:
+            - './svnserver/hooks:/home/svn/demo/hooks'
         ports:
             - '8080:80'
             - '3960:3960'

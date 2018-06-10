@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import os
+import sys
+import re
+from sh import Command
+from rbtools.api.client import RBClient
+from rbtools.api.cache import APICache
+import jenkins
+
+
+sys.stdout = sys.stderr
+
+repo = sys.argv[1]
+txn = sys.argv[2]
+
+# apache user does not have permissions for default path
+APICache.DEFAULT_CACHE_PATH = os.path.join(repo, 'apicache.db')
+
+# svnlook is used to get the commit message
+svnlook = Command('/usr/bin/svnlook')
+commit_msg = str(svnlook('log', '-t', txn, repo))
+
+# find the review #
+match = re.search(r'http://reviewboard:8000/r/(\d+)', commit_msg)
+if not match:
+    print("could not find reviewboard link in commit message")
+    exit(1)
+review_id = match.group(1)
+print('found review #:', review_id)
+
+
+# get data from reviewboard
+client = RBClient('http://reviewboard:8000', api_token='f2c55a7ad5e427063cf51dcdd1689b835b2856ae')
+root = client.get_root()
+review = root.get_review_request(review_request_id=review_id)
+
+if review.ship_it_count < 3:
+    print('ship-its required from Jenkins and other 2 users. Only found', review.ship_it_count)
+    exit(1)
+
+# cycle through commentsd to build shipper list
+comments = review.get_reviews(max_results=200)
+shippers = set()
+for c in comments:
+    uname = c.links.user.title
+    if c.ship_it:
+        shippers.add(uname)
+
+if not 'Jenkins' in shippers:
+    print('Jenkins not found in Shippers.')
+    exit(1)
