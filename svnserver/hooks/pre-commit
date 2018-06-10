@@ -9,6 +9,9 @@ from rbtools.api.client import RBClient
 from rbtools.api.cache import APICache
 import jenkins
 
+jenkins_uname = 'admin'
+reviewboard_url = 'http://reviewboard:8000'
+api_token = 'f2c55a7ad5e427063cf51dcdd1689b835b2856ae'
 
 sys.stdout = sys.stderr
 
@@ -23,7 +26,7 @@ svnlook = Command('/usr/bin/svnlook')
 commit_msg = str(svnlook('log', '-t', txn, repo))
 
 # find the review #
-match = re.search(r'http://reviewboard:8000/r/(\d+)', commit_msg)
+match = re.search(r'%s/r/(\d+)' % reviewboard_url, commit_msg)
 if not match:
     print("could not find reviewboard link in commit message")
     exit(1)
@@ -32,7 +35,7 @@ print('found review #:', review_id)
 
 
 # get data from reviewboard
-client = RBClient('http://reviewboard:8000', api_token='f2c55a7ad5e427063cf51dcdd1689b835b2856ae')
+client = RBClient(reviewboard_url, api_token=api_token)
 root = client.get_root()
 review = root.get_review_request(review_request_id=review_id)
 
@@ -48,6 +51,6 @@ for c in comments:
     if c.ship_it:
         shippers.add(uname)
 
-if not 'Jenkins' in shippers:
+if not jenkins_uname in shippers:
     print('Jenkins not found in Shippers.')
     exit(1)
