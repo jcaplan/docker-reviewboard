@@ -7,7 +7,7 @@ services:
     memcached:
         image: memcached:alpine
     reviewboard:
-        build: ./
+        build: ./reviewboard
         volumes:
             - /root/.ssh
             - /media
