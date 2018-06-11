@@ -28,8 +28,7 @@ def handle_request_publish(data):
 
 
 def handle_review_publish(data):
-    if (data['review']['links']['user']['title'] == jenkins_uname and
-        'Uh oh' in data['review']['body_top']):
+    if data['review']['links']['user']['title'] == jenkins_uname:
         q.put(data['review_request']['id'])
 
 @app.route('/', methods=['POST'])
@@ -47,13 +46,14 @@ class Worker(Process):
     def run(self):
         while True:
             id = q.get()
-            print('WORKER THREAD: build failed for', id)
             client = RBClient(reviewboard_url, api_token=api_token)
             root = client.get_root()
             review = root.get_review_request(review_request_id=id)
             comments = review.get_reviews(max_results=200)
 
-            for c in comments:
+            for i, c in enumerate(comments):
+                if i == len(comments) - 1:
+                    break
                 if c.links.user.title == jenkins_uname and c.ship_it:
                     c.update(ship_it=False)
 
